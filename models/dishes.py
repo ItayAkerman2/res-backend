@@ -1,5 +1,4 @@
 from . import db
-from datetime import datetime 
 
 class Dishes(db.Model):
     dishID = db.Column(db.Integer,primary_key = True,auto_increment = True)

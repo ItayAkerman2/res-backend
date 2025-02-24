@@ -3,26 +3,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-import logging
 import requests
 from sqlalchemy.exc import SQLAlchemyError
-from models import Employee, OrderDetails, Table, Dis, Order 
+#from models import Employee, OrderDetails, Table, Dis, Order 
 import jwt
 import os
 from functools import wraps
+import logging
 
-def setup_logging():
-    handler = logging.FileHandler('logs/app.log')
-    handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
-    return logger
-
-logger = setup_logging()
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key')
 app = Flask(__name__)
@@ -32,15 +20,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@db:3306/res'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-
-limiter = Limiter(app, key_func=get_remote_address)
-
+limiter = Limiter(app)
 def serialize_model(instance):
     return {column.name: getattr(instance, column.name) for column in instance.__table__.columns}
 
 def handle_db_error(error):
-    logger.error(f"Database error: {error}", exc_info=True)
-    return jsonify({'error': 'Database error occurred'}), 500
+    return jsonify({'error': f'Database error occurred {error}'}), 500
 
 def commit_changes():
     try:
@@ -199,6 +184,9 @@ def login():
     else:
         return jsonify({'message': 'Invalid credentials'}), 401
 
+
+
+
 @app.route('/health', methods=['GET'])
 @limiter.limit("10 per minute")
 def check_database_connection():
@@ -206,7 +194,7 @@ def check_database_connection():
         db.session.execute('SELECT 1')
         db_status = "healthy"
     except SQLAlchemyError as e:
-        logger.error(f"Database connection error: {e}", exc_info=True)
+        print(f"Database connection error: {e}", exc_info=True)
         db_status = "unhealthy"
     
     return jsonify({"database_status": db_status}), 200 if db_status == "healthy" else 500
@@ -222,7 +210,7 @@ def check_frontend_connection():
         else:
             frontend_status = "unhealthy"
     except requests.exceptions.RequestException as e:
-        logger.error(f"Frontend connection error: {e}", exc_info=True)
+        print(f"Frontend connection error: {e}", exc_info=True)
         frontend_status = "unhealthy"
     
     return jsonify({
@@ -242,7 +230,8 @@ def token_required(f):
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             current_user = Employee.query.filter_by(id=data['id']).first()
             if current_user is None:
-                raise Exception("User not found")
+                print("User not found")
+                return jsonify({'message': 'User not found!'}), 404
         except jwt.ExpiredSignatureError:
             return jsonify({'message': 'Token has expired!'}), 403
         except Exception as e:
@@ -251,6 +240,8 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     return decorator
 
+
+
 if __name__ == '__main__':
-    setup_logging()
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, ssl_context=('certificate.crt', 'private.key'))
+

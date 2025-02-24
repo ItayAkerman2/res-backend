@@ -82,6 +82,7 @@ def add_table():
         logger.error(f"Error with sqlalchemy -- {SQ_Er}", exc_info=True)
         return jsonify({'error': f'Connection error / - {SQ_Er}'})
 
+#remove_functions
 @app.route('/dis', methods=['DELETE'])
 @limiter.limit("10 per minute")  
 def remove_dis():

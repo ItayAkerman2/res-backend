@@ -24,6 +24,8 @@ limiter = Limiter(app, key_func=get_remote_address)
 def serialize_model(instance):
     return {column.name: getattr(instance, column.name) for column in instance.__table__.columns}
 
+##load_functions 
+
 @app.route('/employees', methods=['GET'])
 def load_employees():
     try:
@@ -50,6 +52,8 @@ def load_dis():
     except SQLAlchemyError as SQ_Er:
         logger.error(f"Database error: {SQ_Er}", exc_info=True)
         return jsonify({'error': f'Database error occurred -/ {SQ_Er}'}), 500
+
+## add_functions
 
 @app.route('/dis', methods=['POST'])
 @limiter.limit("10 per minute")  

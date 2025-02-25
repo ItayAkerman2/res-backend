@@ -186,9 +186,6 @@ def login():
     else:
         return jsonify({'message': 'Invalid credentials'}), 401
 
-
-
-
 @app.route('/health', methods=['GET'])
 @limiter.limit("10 per minute")
 def check_database_connection():
@@ -227,7 +224,6 @@ def token_required(f):
 
         if not token:
             return jsonify({'message': 'Token is missing!'}), 403
-
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             current_user = Employee.query.filter_by(id=data['id']).first()
@@ -241,8 +237,6 @@ def token_required(f):
 
         return f(current_user, *args, **kwargs)
     return decorator
-
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, ssl_context=('certificate.crt', 'private.key'))

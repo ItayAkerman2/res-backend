@@ -5,3 +5,5 @@ class Order_Details(db.Model):
     order_id = db.Column(db.Integer,db.ForeignKey('orders.orderID'))
     dishID = db.Column(db.Integer,db.ForeignKey('dishes.dishID')) 
     number_of_dishes = db.Column(db.Integer,nullable = False) 
+    price = db.Column(db.Integer)
+    

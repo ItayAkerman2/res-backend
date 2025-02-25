@@ -5,11 +5,13 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_limiter import Limiter
 import requests
 from sqlalchemy.exc import SQLAlchemyError
-#from models import Employee, OrderDetails, Table, Dis, Order 
+#from models import Employee, Order, OrderDetails, Table, Dis,db
 import jwt
 import os
 from functools import wraps
 import logging
+from flask_migrate import Migrate
+
 
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key')
@@ -18,8 +20,9 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@db:3306/res'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+migrate = Migrate(app, db)
 
-db = SQLAlchemy(app)
 limiter = Limiter(app)
 def serialize_model(instance):
     return {column.name: getattr(instance, column.name) for column in instance.__table__.columns}
@@ -203,7 +206,7 @@ def check_database_connection():
 @limiter.limit("10 per minute")
 def check_frontend_connection():
     try:
-        frontend_url = "http://localhost:5000" 
+        frontend_url = "https://localhost:5000" 
         response = requests.get(frontend_url + "/health")
         if response.status_code == 200:
             frontend_status = "healthy"

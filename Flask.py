@@ -9,7 +9,6 @@ from sqlalchemy.exc import SQLAlchemyError
 import jwt
 import os
 from functools import wraps
-import logging
 from flask_migrate import Migrate
 
 

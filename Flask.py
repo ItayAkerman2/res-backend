@@ -16,6 +16,8 @@ from models.orders import Orders
 from models.roles import Roles
 from models.tables import Tables
 from models.tastes import Tastes
+from models.dish_type import Dish_Type
+from models.dish_type_dish import Dish_Type_Dish
 import jwt
 import os
 from functools import wraps

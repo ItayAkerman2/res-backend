@@ -5,12 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_limiter import Limiter
 import requests
 from sqlalchemy.exc import SQLAlchemyError
-import jwt
-import os
-from functools import wraps
-from flask_migrate import Migrate
-
-from . import db
+from models import db
 from models.dishes import Dishes
 from models.dishes_tastes import Dishes_Tastes
 from models.employees import Employees
@@ -21,6 +16,10 @@ from models.orders import Orders
 from models.roles import Roles
 from models.tables import Tables
 from models.tastes import Tastes
+import jwt
+import os
+from functools import wraps
+from flask_migrate import Migrate
 
 # update edit
 
@@ -82,7 +81,7 @@ def load_tables():
 @app.route('/dishes', methods=['GET'])
 def load_dis():
     try:
-        dis_list = Dish.query.all()
+        dis_list = Dishes.query.all()
         return jsonify([serialize_model(dis) for dis in dis_list]), 200
     except SQLAlchemyError as e:
         return handle_db_error(e)
@@ -93,7 +92,7 @@ def load_dis():
 def add_dish():
     try:
         data = request.get_json()
-        new_dis = Dish(**data)
+        new_dis = Dishes(**data)
         db.session.add(new_dis)
         commit_changes()
         return jsonify(serialize_model(new_dis)), 201
@@ -106,7 +105,7 @@ def add_dish():
 def add_table():
     try:
         data = request.get_json()
-        new_table = Table(**data)
+        new_table = Tables(**data)
         db.session.add(new_table)
         commit_changes()
         return jsonify(serialize_model(new_table)), 201
@@ -118,7 +117,7 @@ def add_table():
 def add_employee():
     try:
         data = request.get_json()
-        new_employee = Employee(**data)
+        new_employee = Employees(**data)
         db.session.add(new_employee)
         commit_changes()
         return jsonify(serialize_model(new_employee)), 201
@@ -132,7 +131,7 @@ def remove_dish():
     try:
         data = request.get_json()
         dis_id = data.get('id')
-        dis = Dish.query.get(dis_id)
+        dis = Dishes.query.get(dis_id)
         if dis is None:
             return jsonify({'error': 'Dis not found'}), 404
 
@@ -149,7 +148,7 @@ def remove_order():
     try:
         data = request.get_json()
         order_id = data.get('id')
-        order = Order.query.get(order_id)
+        order = Orders.query.get(order_id)
         if order is None:
             return jsonify({'error': 'No order found with the given ID'}), 404
 
@@ -166,7 +165,7 @@ def remove_table():
     try:
         data = request.get_json()
         table_id = data.get('id')
-        table = Table.query.get(table_id)
+        table = Tables.query.get(table_id)
         if table is None:
             return jsonify({'error': 'No table found with the given ID'}), 404
 
@@ -183,7 +182,7 @@ def remove_employee():
     try:
         data = request.get_json()
         employee_id = data.get('id')
-        employee = Employee.query.get(employee_id)
+        employee = Employees.query.get(employee_id)
         if employee is None:
             return jsonify({'error': 'No employee found with the given ID'}), 404
 
@@ -201,7 +200,7 @@ def login():
     if not data or not data.get('username') or not data.get('password'):
         return jsonify({'message': 'Username and password are required!'}), 400
 
-    user = Employee.query.filter_by(username=data['username']).first()
+    user = Employees.query.filter_by(username=data['username']).first()
 
     if user and user.password == data['password']:
         token = jwt.encode({
@@ -217,7 +216,7 @@ def login():
 def edit_dish():
     data = request.get_json()
     dish_id = data.get('id')
-    dish = Dish.query.get(dish_id)
+    dish = Dishes.query.get(dish_id)
     if not dish:
         return jsonify({'error': 'Dish not found'}),404
     dish.dishName = data.get('dishName', dish.name)
@@ -237,11 +236,11 @@ def edit_table():
     if not table:
         return jsonify({'error': 'Table not found'}),404
     table.guests_amount = data.get('guests_amount', table.guests_amount)
-    table.order_id = data.get('cost', dish.cost)
-    dish.cook_time = data.get('cook_time', dish.cook_time)
-    dish.type_id = Catalog
-    dish.image_url = data.get('image_url',dish.image_url)
-    dish.description = data.get('description', dish.description)
+    table.order_id = data.get('cost', Dishes.cost)
+    Dishes.cook_time = data.get('cook_time', Dishes.cook_time)
+    Dishes.type_id = Catalog
+    Dishes.image_url = data.get('image_url',Dishes.image_url)
+    Dishes.description = data.get('description', Dishes.description)
     db.session.commit()
     return jsonify({'message': 'Table updated successfully'}),200
 

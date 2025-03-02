@@ -22,12 +22,13 @@ from functools import wraps
 from flask_migrate import Migrate
 
 # update edit
-
+from dotenv import load_dotenv
+load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key')
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@db:3306/res'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://root:{os.getenv("MYSQL_PASSWORD")}@localhost:3306/res'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -54,7 +55,7 @@ def commit_changes():
 @app.route('/employees', methods=['GET'])
 def load_employees():
     try:
-        employees = Employee.query.all()
+        employees = Employees.query.all()
         return jsonify([serialize_model(emp) for emp in employees]), 200
     except SQLAlchemyError as e:
         return handle_db_error(e)
@@ -63,7 +64,7 @@ def load_employees():
 @app.route('/ordersDetails', methods=['GET'])
 def load_order_details():
     try:
-        order_details = OrderDetails.query.all()
+        order_details = Order_Details.query.all()
         return jsonify([serialize_model(order) for order in order_details]), 200
     except SQLAlchemyError as e:
         return handle_db_error(e)
@@ -72,7 +73,7 @@ def load_order_details():
 @app.route('/tables', methods=['GET'])
 def load_tables():
     try:
-        tables = Table.query.all()
+        tables = Tables.query.all()
         return jsonify([serialize_model(table) for table in tables]), 200
     except SQLAlchemyError as e:
         return handle_db_error(e)
@@ -212,7 +213,7 @@ def login():
     else:
         return jsonify({'message': 'Invalid credentials'}), 401
 
-@app.route('dishes', methods=['PUTS'])
+@app.route('/dishes', methods=['PUT'])
 def edit_dish():
     data = request.get_json()
     dish_id = data.get('id')
@@ -228,26 +229,26 @@ def edit_dish():
     db.session.commit()
     return jsonify({'message': 'Dish updated successfully'}),200
 
-@app.route('tables', methods=['PUTS'])
-def edit_table():
-    data = request.get_json()
-    table_id = data.get('id')
-    table = Tables.query.get(table_id)
-    if not table:
-        return jsonify({'error': 'Table not found'}),404
-    table.guests_amount = data.get('guests_amount', table.guests_amount)
-    table.order_id = data.get('cost', Dishes.cost)
-    Dishes.cook_time = data.get('cook_time', Dishes.cook_time)
-    Dishes.type_id = Catalog
-    Dishes.image_url = data.get('image_url',Dishes.image_url)
-    Dishes.description = data.get('description', Dishes.description)
-    db.session.commit()
-    return jsonify({'message': 'Table updated successfully'}),200
+# @app.route('tables', methods=['PUT'])
+# def edit_table():
+#     data = request.get_json()
+#     table_id = data.get('id')
+#     table = Tables.query.get(table_id)
+#     if not table:
+#         return jsonify({'error': 'Table not found'}),404
+#     table.guests_amount = data.get('guests_amount', table.guests_amount)
+#     table.order_id = data.get('cost', Dishes.cost)
+#     Dishes.cook_time = data.get('cook_time', Dishes.cook_time)
+#     Dishes.type_id = Catalog
+#     Dishes.image_url = data.get('image_url',Dishes.image_url)
+#     Dishes.description = data.get('description', Dishes.description)
+#     db.session.commit()
+#     return jsonify({'message': 'Table updated successfully'}),200
 
 
-@app.route('employees', methods=['PUTS'])
-def edit_table():
-    data = request.json
+# @app.route('/employees', methods=['PUTS'])
+# def edit_table():
+#     data = request.json
 
 @app.route('/health', methods=['GET'])
 @limiter.limit("10 per minute")
@@ -291,7 +292,7 @@ def token_required(f):
             return jsonify({'message': 'Token is missing!'}), 403
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            current_user = Employee.query.filter_by(id=data['id']).first()
+            current_user = Employees.query.filter_by(id=data['id']).first()
             if current_user is None:
                 print("User not found")
                 return jsonify({'message': 'User not found!'}), 404
@@ -306,5 +307,5 @@ def token_required(f):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(host='0.0.0.0', port=5000, ssl_context=(
-        'certificate.crt', 'private.key'))
+    app.run(host='0.0.0.0', port=5000)
+

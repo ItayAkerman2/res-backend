@@ -5,11 +5,22 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_limiter import Limiter
 import requests
 from sqlalchemy.exc import SQLAlchemyError
-from models import Dishes_Tastes,Dishes,Employees,Meal_Type_Dishes,Meal_Type,Order_Details,Orders,Roles,Tables,Tastes,db
 import jwt
 import os
 from functools import wraps
 from flask_migrate import Migrate
+
+from . import db
+from models.dishes import Dishes
+from models.dishes_tastes import Dishes_Tastes
+from models.employees import Employees
+from models.meal_type import Meal_Type
+from models.meal_type_dishes import Meal_Type_Dishes
+from models.order_details import Order_Details
+from models.orders import Orders
+from models.roles import Roles
+from models.tables import Tables
+from models.tastes import Tastes
 
 # update edit
 

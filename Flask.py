@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_limiter import Limiter
 import requests
 from sqlalchemy.exc import SQLAlchemyError
-# from models import Employee, Order, OrderDetails, Table, Dis,db
+from models import Dishes_Tastes,Dishes,Employees,Meal_Type_Dishes,Meal_Type,Order_Details,Orders,Roles,Tables,Tastes,db
 import jwt
 import os
 from functools import wraps
@@ -294,5 +294,7 @@ def token_required(f):
     return decorator
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(host='0.0.0.0', port=5000, ssl_context=(
         'certificate.crt', 'private.key'))

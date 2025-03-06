@@ -54,7 +54,14 @@ def commit_changes():
         db.session.rollback()
         return handle_db_error(e)
 
-
+@app.route('/orders', methods=['GET'])
+def load_tables():
+    try:
+        orders = Orders.query.all()
+        return jsonify([serialize_model(order) for order in orders]), 200
+    except SQLAlchemyError as e:
+        return handle_db_error(e)
+    
 @app.route('/employees', methods=['GET'])
 def load_employees():
     try:
@@ -214,19 +221,13 @@ def remove_employee():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-
     if not data or not data.get('username') or not data.get('password'):
         return jsonify({'message': 'Username and password are required!'}), 400
 
-    user = Admins.query.filter_by(user_name=data['username']).first()
+    user = Admins.query.filter_by(username=data['username']).first()
 
     if user and user.password == data['password']: 
-        token = jwt.encode({
-            'id': user.id,
-            'exp': datetime.utcnow() + timedelta(hours=1)
-        }, SECRET_KEY, algorithm="HS256")
-
-        return jsonify({'token': token}), 200
+        return jsonify({'message': 'Login successful'}), 200
     else:
         return jsonify({'message': 'Invalid credentials'}), 401
 
@@ -322,26 +323,7 @@ def check_frontend_connection():
     }), 200 if frontend_status == "healthy" else 500
 
 
-def token_required(f):
-    @wraps(f)
-    def decorator(*args, **kwargs):
-        token = request.headers.get('Authorization')
 
-        if not token:
-            return jsonify({'message': 'Token is missing!'}), 403
-        try:
-            data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            current_user = Admins.query.filter_by(id=data['id']).first()
-            if current_user is None:
-                print("User not found")
-                return jsonify({'message': 'User not found!'}), 404
-        except jwt.ExpiredSignatureError:
-            return jsonify({'message': 'Token has expired!'}), 403
-        except Exception as e:
-            return jsonify({'message': 'Token is invalid!'}), 403
-
-        return f(current_user, *args, **kwargs)
-    return decorator
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

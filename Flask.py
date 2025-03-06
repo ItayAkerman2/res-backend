@@ -35,8 +35,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 migrate = Migrate(app, db)
 
-limiter = Limiter(app)
-
+# limiter = Limiter(app=app, default_limits=["100 per hour"])
 
 def serialize_model(instance):
     return {column.name: getattr(instance, column.name) for column in instance.__table__.columns}
@@ -49,6 +48,7 @@ def handle_db_error(error):
 def commit_changes():
     try:
         db.session.commit()
+        return None
     except SQLAlchemyError as e:
         db.session.rollback()
         return handle_db_error(e)
@@ -82,35 +82,39 @@ def load_tables():
 
 
 @app.route('/dishes', methods=['GET'])
-def load_dis():
+def load_dishes():  
     try:
-        dis_list = Dishes.query.all()
-        return jsonify([serialize_model(dis) for dis in dis_list]), 200
+        dish_list = Dishes.query.all()
+        return jsonify([serialize_model(dish) for dish in dish_list]), 200
     except SQLAlchemyError as e:
         return handle_db_error(e)
 
 
 @app.route('/dishes', methods=['POST'])
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def add_dish():
     try:
         data = request.get_json()
-        new_dis = Dishes(**data)
-        db.session.add(new_dis)
-        commit_changes()
-        return jsonify(serialize_model(new_dis)), 201
+        new_dish = Dishes(**data)
+        db.session.add(new_dish)
+        result = commit_changes()
+        if result:
+            return result
+        return jsonify(serialize_model(new_dish)), 201
     except SQLAlchemyError as e:
         return handle_db_error(e)
 
 
 @app.route('/tables', methods=['POST'])
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def add_table():
     try:
         data = request.get_json()
         new_table = Tables(**data)
         db.session.add(new_table)
-        commit_changes()
+        result = commit_changes()
+        if result:
+            return result
         return jsonify(serialize_model(new_table)), 201
     except SQLAlchemyError as e:
         return handle_db_error(e)
@@ -122,31 +126,35 @@ def add_employee():
         data = request.get_json()
         new_employee = Employees(**data)
         db.session.add(new_employee)
-        commit_changes()
+        result = commit_changes()
+        if result:
+            return result
         return jsonify(serialize_model(new_employee)), 201
     except SQLAlchemyError as e:
         return handle_db_error(e)
 
 
 @app.route('/dishes', methods=['DELETE'])
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def remove_dish():
     try:
         data = request.get_json()
-        dis_id = data.get('id')
-        dis = Dishes.query.get(dis_id)
-        if dis is None:
-            return jsonify({'error': 'Dis not found'}), 404
+        dish_id = data.get('id')
+        dish = Dishes.query.get(dish_id)
+        if dish is None:
+            return jsonify({'error': 'Dish not found'}), 404
 
-        db.session.delete(dis)
-        commit_changes()
-        return jsonify({'message': f'Dis {dis_id} removed successfully'}), 200
+        db.session.delete(dish)
+        result = commit_changes()
+        if result:
+            return result
+        return jsonify({'message': f'Dish {dish_id} removed successfully'}), 200
     except SQLAlchemyError as e:
         return handle_db_error(e)
 
 
 @app.route('/orders', methods=['DELETE'])
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def remove_order():
     try:
         data = request.get_json()
@@ -156,14 +164,16 @@ def remove_order():
             return jsonify({'error': 'No order found with the given ID'}), 404
 
         db.session.delete(order)
-        commit_changes()
+        result = commit_changes()
+        if result:
+            return result
         return jsonify({'message': f'Order {order_id} removed successfully'}), 200
     except SQLAlchemyError as e:
         return handle_db_error(e)
 
 
 @app.route('/tables', methods=['DELETE'])
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def remove_table():
     try:
         data = request.get_json()
@@ -173,14 +183,16 @@ def remove_table():
             return jsonify({'error': 'No table found with the given ID'}), 404
 
         db.session.delete(table)
-        commit_changes()
+        result = commit_changes()
+        if result:
+            return result
         return jsonify({'message': f'Table {table_id} removed successfully'}), 200
     except SQLAlchemyError as e:
         return handle_db_error(e)
 
 
 @app.route('/employees', methods=['DELETE'])
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def remove_employee():
     try:
         data = request.get_json()
@@ -190,7 +202,9 @@ def remove_employee():
             return jsonify({'error': 'No employee found with the given ID'}), 404
 
         db.session.delete(employee)
-        commit_changes()
+        result = commit_changes()
+        if result:
+            return result
         return jsonify({'message': f'Employee {employee_id} removed successfully'}), 200
     except SQLAlchemyError as e:
         return handle_db_error(e)
@@ -205,7 +219,7 @@ def login():
 
     user = Employees.query.filter_by(username=data['username']).first()
 
-    if user and user.password == data['password']:
+    if user and user.password == data['password']: 
         token = jwt.encode({
             'id': user.id,
             'exp': datetime.utcnow() + timedelta(hours=1)
@@ -274,9 +288,8 @@ def edit_employee():
     return jsonify({'message': 'Employee updated successfully'}), 200
 
 
-
 @app.route('/health', methods=['GET'])
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def check_database_connection():
     try:
         db.session.execute('SELECT 1')
@@ -289,10 +302,10 @@ def check_database_connection():
 
 
 @app.route('/frontend-health', methods=['GET'])
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def check_frontend_connection():
     try:
-        frontend_url = "https://localhost:5000"
+        frontend_url = "https://localhost:5000"  
         response = requests.get(frontend_url + "/health")
         if response.status_code == 200:
             frontend_status = "healthy"
@@ -328,7 +341,6 @@ def token_required(f):
 
         return f(current_user, *args, **kwargs)
     return decorator
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

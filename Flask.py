@@ -55,7 +55,7 @@ def commit_changes():
         return handle_db_error(e)
 
 @app.route('/orders', methods=['GET'])
-def load_tables():
+def get_orders():
     try:
         orders = Orders.query.all()
         return jsonify([serialize_model(order) for order in orders]), 200

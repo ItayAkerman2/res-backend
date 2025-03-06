@@ -215,42 +215,65 @@ def login():
     else:
         return jsonify({'message': 'Invalid credentials'}), 401
 
-@app.route('/dishes', methods=['PUT'])
+
+@app.route('/dishes', methods=['PUT'])  
 def edit_dish():
     data = request.get_json()
     dish_id = data.get('id')
     dish = Dishes.query.get(dish_id)
     if not dish:
-        return jsonify({'error': 'Dish not found'}),404
-    dish.dishName = data.get('dishName', dish.name)
+        return jsonify({'error': 'Dish not found'}), 404
+    
+    dish.dishName = data.get('dishName', dish.dishName)  
     dish.cost = data.get('cost', dish.cost)
     dish.cook_time = data.get('cook_time', dish.cook_time)
     dish.type_id = data.get('type_id', dish.type_id)
-    dish.image_url = data.get('image_url',dish.image_url)
+    dish.image_url = data.get('image_url', dish.image_url)
     dish.description = data.get('description', dish.description)
-    db.session.commit()
-    return jsonify({'message': 'Dish updated successfully'}),200
-
-# @app.route('tables', methods=['PUT'])
-# def edit_table():
-#     data = request.get_json()
-#     table_id = data.get('id')
-#     table = Tables.query.get(table_id)
-#     if not table:
-#         return jsonify({'error': 'Table not found'}),404
-#     table.guests_amount = data.get('guests_amount', table.guests_amount)
-#     table.order_id = data.get('cost', Dishes.cost)
-#     Dishes.cook_time = data.get('cook_time', Dishes.cook_time)
-#     Dishes.type_id = Catalog
-#     Dishes.image_url = data.get('image_url',Dishes.image_url)
-#     Dishes.description = data.get('description', Dishes.description)
-#     db.session.commit()
-#     return jsonify({'message': 'Table updated successfully'}),200
+    
+    result = commit_changes()
+    if result:
+        return result
+    return jsonify({'message': 'Dish updated successfully'}), 200
 
 
-# @app.route('/employees', methods=['PUTS'])
-# def edit_table():
-#     data = request.json
+@app.route('/tables', methods=['PUT'])  
+def edit_table():
+    data = request.get_json()
+    table_id = data.get('id')
+    table = Tables.query.get(table_id)  
+    if not table:
+        return jsonify({'error': 'Table not found'}), 404
+    
+    table.guests_amount = data.get('guests_amount', table.guests_amount)
+    table.order_id = data.get('order_id', table.order_id)  
+    
+    result = commit_changes()
+    if result:
+        return result
+    return jsonify({'message': 'Table updated successfully'}), 200
+
+
+@app.route('/employees', methods=['PUT'])  
+def edit_employee(): 
+    data = request.get_json()
+    employee_id = data.get('id')
+    employee = Employees.query.get(employee_id)
+    if not employee:
+        return jsonify({'error': 'Employee not found'}), 404
+    
+    employee.username = data.get('username', employee.username)
+    employee.password = data.get('password', employee.password) 
+    employee.first_name = data.get('first_name', employee.first_name)
+    employee.last_name = data.get('last_name', employee.last_name)
+    employee.role_id = data.get('role_id', employee.role_id)
+    
+    result = commit_changes()
+    if result:
+        return result
+    return jsonify({'message': 'Employee updated successfully'}), 200
+
+
 
 @app.route('/health', methods=['GET'])
 @limiter.limit("10 per minute")

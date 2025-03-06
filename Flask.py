@@ -18,6 +18,7 @@ from models.tables import Tables
 from models.tastes import Tastes
 from models.dish_type import Dish_Type
 from models.dish_type_dish import Dish_Type_Dish
+from models.admins import Admins
 import jwt
 import os
 from functools import wraps
@@ -217,7 +218,7 @@ def login():
     if not data or not data.get('username') or not data.get('password'):
         return jsonify({'message': 'Username and password are required!'}), 400
 
-    user = Employees.query.filter_by(username=data['username']).first()
+    user = Admins.query.filter_by(user_name=data['username']).first()
 
     if user and user.password == data['password']: 
         token = jwt.encode({
@@ -330,7 +331,7 @@ def token_required(f):
             return jsonify({'message': 'Token is missing!'}), 403
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            current_user = Employees.query.filter_by(id=data['id']).first()
+            current_user = Admins.query.filter_by(id=data['id']).first()
             if current_user is None:
                 print("User not found")
                 return jsonify({'message': 'User not found!'}), 404

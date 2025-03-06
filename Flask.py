@@ -221,10 +221,10 @@ def remove_employee():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    if not data or not data.get('username') or not data.get('password'):
+    if not data or not data['username'] or not data['password']:
         return jsonify({'message': 'Username and password are required!'}), 400
 
-    user = Admins.query.filter_by(username=data['username']).first()
+    user = Admins.query.filter_by(user_name=data['username']).first()
 
     if user and user.password == data['password']: 
         return jsonify({'message': 'Login successful'}), 200
